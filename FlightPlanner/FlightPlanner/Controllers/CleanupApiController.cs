@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FlightPlanner.Controllers;
 
-[Authorize]
 [Route("testing-api")]
 [ApiController]
 public class CleanupApiController : ControllerBase

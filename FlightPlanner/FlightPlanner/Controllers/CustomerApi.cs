@@ -1,9 +1,6 @@
 using FlightPlanner.Interfaces;
 using FlightPlanner.Models;
-using FlightPlanner.Storage;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace FlightPlanner.Controllers;
 
@@ -11,18 +8,25 @@ namespace FlightPlanner.Controllers;
 [ApiController]
 public class CustomerApi : ControllerBase
 {
+    private readonly FlightPlannerDbContext _context;
+   
+    public CustomerApi(FlightPlannerDbContext context)
+    {
+        _context = context;
+    }
+    
     [HttpGet]
     [Route("airports")]
     public IActionResult SearchAirport(string search)
     {
-        return Ok(FlightStorage.SearchAirportsByPhrase(search));
+        return Ok(_context.SearchAirportsByPhrase(search));
     }
 
     [HttpPost]
     [Route("flights/search")]
     public IActionResult SearchFlights([FromBody] SearchFlightsRequest request)
     {
-        var searchResult = FlightStorage.SearchFlights(request);
+        var searchResult = _context.SearchFlights(request);
         if (searchResult == null || request.From == request.To)
         {
             return BadRequest();
@@ -42,6 +46,6 @@ public class CustomerApi : ControllerBase
     [Route("flights/{id}")]
     public IActionResult SearchFlightById(int id)
     {
-        return FlightStorage.SearchFlightById(id) != null ? Ok(FlightStorage.SearchFlightById(id)) : NotFound();
+        return _context.GetFlightById(id) != null ? Ok(_context.GetFlightById(id)) : NotFound();
     }
 }

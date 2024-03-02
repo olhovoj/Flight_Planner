@@ -1,5 +1,5 @@
+using FlightPlanner.Handlers;
 using FlightPlanner.Models;
-using FlightPlanner.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,16 +10,25 @@ namespace FlightPlanner.Controllers;
 [ApiController]
 public class AdminApiController : ControllerBase
 {
+   private readonly FlightPlannerDbContext _context;
+   private static readonly object _lock = new object();
+   
+   public AdminApiController(FlightPlannerDbContext context)
+   {
+      _context = context;
+   }
+   
    [HttpGet]
    [Route("flights/{id}")]
    public IActionResult GetFlight(int id)
    {
-      var flight = FlightStorage.GetFlightById(id);
+      var flight = _context.GetFlightById(id);
+      
       if (flight == null)
       {
          return NotFound();
       }
-
+   
       return Ok(flight);
    }
    
@@ -27,49 +36,30 @@ public class AdminApiController : ControllerBase
    [Route("flights")]
    public IActionResult AddFlight(Flight flight)
    {
-      if (FlightStorage.IsDuplicate(flight))
-         return Conflict();
-      
-
-      if (flight.From.City.ToUpper().Trim() == flight.To.City.ToUpper().Trim() &&
-          flight.From.Country.ToUpper().Trim() == flight.To.Country.ToUpper().Trim() &&
-          flight.From.AirportCode.ToUpper().Trim() == flight.To.AirportCode.ToUpper().Trim())
+      lock (_lock)
       {
-         return BadRequest();
+         if (_context.IsDuplicate(flight))
+            return Conflict();
+      
+         if (ArgumentValidation.IsSameFromToAirport(flight) || 
+             ArgumentValidation.IsAnyNull(flight) || 
+             ArgumentValidation.IsDateInvalid(flight))
+         {
+            return BadRequest();
+         }
+      
+         _context.AddFlight(flight);
+      
+         return Created("", flight);
       }
-      
-      if (string.IsNullOrEmpty(flight.From.City) ||
-          string.IsNullOrEmpty(flight.From.Country) ||
-          string.IsNullOrEmpty(flight.From.AirportCode) ||
-          string.IsNullOrEmpty(flight.To.City) ||
-          string.IsNullOrEmpty(flight.To.Country) ||
-          string.IsNullOrEmpty(flight.To.AirportCode) ||
-          string.IsNullOrEmpty(flight.Carrier) ||
-          string.IsNullOrEmpty(flight.DepartureTime) ||
-          string.IsNullOrEmpty(flight.ArrivalTime)
-         )
-      {
-         return BadRequest();
-      }
-      
-      if (DateTime.Parse(flight.DepartureTime) >= DateTime.Parse(flight.ArrivalTime) ||
-          DateTime.Parse(flight.DepartureTime) < DateTime.Parse(flight.ArrivalTime).AddDays(-90))
-      {
-         return BadRequest();
-      }
-      
-      FlightStorage.AddFlight(flight);
-      
-      return Created("", flight);
    }
 
    [HttpDelete]
    [Route("flights/{id}")]
    public IActionResult DeleteFlight(int id)
    {
-      FlightStorage.DeleteFlight(id);
+      _context.DeleteFlight(id);
       
       return Ok();
    }
-   
 }  

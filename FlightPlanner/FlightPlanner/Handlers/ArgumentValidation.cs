@@ -1,6 +1,6 @@
 using FlightPlanner.Models;
 
-namespace FlightPlanner.Handlers;
+namespace FlightPlanner;
 
 public class ArgumentValidation
 {

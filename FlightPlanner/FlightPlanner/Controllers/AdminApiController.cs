@@ -1,4 +1,3 @@
-using FlightPlanner.Handlers;
 using FlightPlanner.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

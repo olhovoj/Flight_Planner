@@ -9,7 +9,7 @@ namespace FlightPlanner.Controllers;
 
 [Route("api")]
 [ApiController]
-public class CustomerApi : ControllerBase
+public class CustomerApiController : ControllerBase
 {
     [HttpGet]
     [Route("airports")]

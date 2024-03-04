@@ -20,13 +20,13 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
     
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        // skip authentication if endpoint has [AllowAnonymous] attribute
         var endpoint = Context.GetEndpoint();
         if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null)
             return AuthenticateResult.NoResult();
 
         if (!Request.Headers.ContainsKey("Authorization"))
             return AuthenticateResult.Fail("Missing Authorization Header");
+        
         var isAuthenticated = false;
         try
         {

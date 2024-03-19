@@ -1,5 +1,9 @@
-using FlightPlanner.Interfaces;
-using FlightPlanner.Models;
+using FlightPlanner.Core.Models;
+using FlightPlanner.Extensions;
+using FlightPlanner.UseCases.Search.SearchAirport;
+using FlightPlanner.UseCases.Search.SearchFlightById;
+using FlightPlanner.UseCases.Search.SearchFlights;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlightPlanner.Controllers;
@@ -8,44 +12,37 @@ namespace FlightPlanner.Controllers;
 [ApiController]
 public class CustomerApi : ControllerBase
 {
-    private readonly FlightPlannerDbContext _context;
+    private readonly IMediator _mediator;
    
-    public CustomerApi(FlightPlannerDbContext context)
+    public CustomerApi(IMediator mediator)
     {
-        _context = context;
+        _mediator = mediator;
     }
     
     [HttpGet]
     [Route("airports")]
-    public IActionResult SearchAirport(string search)
+    public async Task<IActionResult> SearchAirport(string search)
     {
-        return Ok(_context.SearchAirportsByPhrase(search));
+        return (await _mediator
+            .Send(new SearchAirportQuery(search)))
+            .ToActionResult();
     }
 
     [HttpPost]
     [Route("flights/search")]
-    public IActionResult SearchFlights([FromBody] SearchFlightsRequest request)
+    public async Task<IActionResult> SearchFlights([FromBody] SearchFlightsRequest request)
     {
-        var searchResult = _context.SearchFlights(request);
-        if (searchResult == null || request.From == request.To)
-        {
-            return BadRequest();
-        }
-        
-        var result = new PageResult<Flight>
-        {
-            Page = 0,
-            TotalItems = searchResult.Count,
-            Items = searchResult
-        };
-        
-        return Ok(result);
+        return (await _mediator
+            .Send(new SearchFlightQuery(request)))
+            .ToActionResult();
     }
     
     [HttpGet]
     [Route("flights/{id}")]
-    public IActionResult SearchFlightById(int id)
+    public async Task<IActionResult> SearchFlightById(int id)
     {
-        return _context.GetFlightById(id) != null ? Ok(_context.GetFlightById(id)) : NotFound();
+        return (await _mediator
+            .Send(new SearchFlightByIdQuery(id)))
+            .ToActionResult();
     }
 }

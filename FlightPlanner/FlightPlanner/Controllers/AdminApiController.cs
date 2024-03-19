@@ -1,64 +1,50 @@
-using FlightPlanner.Models;
+using FlightPlanner.Extensions;
+using FlightPlanner.UseCases.Flights.AddFlight;
+using FlightPlanner.UseCases.Flights.DeleteFlightCommand;
+using FlightPlanner.UseCases.Flights.GetFlight;
+using FlightPlanner.UseCases.Models;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlightPlanner.Controllers;
 
 [Authorize]
-[Route("admin-api")]
+[Route("admin-api/flights")]
 [ApiController]
 public class AdminApiController : ControllerBase
 {
-   private readonly FlightPlannerDbContext _context;
-   private static readonly object _lock = new object();
+   private readonly IMediator _mediator;
    
-   public AdminApiController(FlightPlannerDbContext context)
+   public AdminApiController(IMediator mediator)
    {
-      _context = context;
+      _mediator = mediator;
    }
-   
+    
    [HttpGet]
-   [Route("flights/{id}")]
-   public IActionResult GetFlight(int id)
+   [Route("{id:int}")]
+   public async Task<IActionResult> GetFlight(int id)
    {
-      var flight = _context.GetFlightById(id);
-      
-      if (flight == null)
-      {
-         return NotFound();
-      }
-   
-      return Ok(flight);
+      return (await _mediator
+         .Send(new GetFlightQuery(id)))
+         .ToActionResult();
    }
    
    [HttpPut]
-   [Route("flights")]
-   public IActionResult AddFlight(Flight flight)
+   [Route("")]
+   public async Task<IActionResult> AddFlight(AddFlightRequest request)
    {
-      lock (_lock)
-      {
-         if (_context.IsDuplicate(flight))
-            return Conflict();
-      
-         if (ArgumentValidation.IsSameFromToAirport(flight) || 
-             ArgumentValidation.IsAnyNull(flight) || 
-             ArgumentValidation.IsDateInvalid(flight))
-         {
-            return BadRequest();
-         }
-      
-         _context.AddFlight(flight);
-      
-         return Created("", flight);
-      }
+      return (await _mediator
+         .Send(new AddFlightCommand(request)))
+         .ToActionResult();
    }
 
    [HttpDelete]
-   [Route("flights/{id}")]
-   public IActionResult DeleteFlight(int id)
+   [Route("{id:int}")]
+   public async Task<IActionResult> DeleteFlight(int id)
    {
-      _context.DeleteFlight(id);
-      
-      return Ok();
+      return (await _mediator
+         .Send(new DeleteFlightCommand(id)))
+         .ToActionResult();
    }
 }  

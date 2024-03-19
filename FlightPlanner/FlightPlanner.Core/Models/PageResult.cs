@@ -1,6 +1,6 @@
-namespace FlightPlanner.Interfaces;
+namespace FlightPlanner.Core.Models;
 
-public class PageResult<T>
+public class PageResult<T> where T : Entity
 {
     public int Page { get; set; }
     public int TotalItems { get; set; }

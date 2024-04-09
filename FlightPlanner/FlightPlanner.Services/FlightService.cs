@@ -26,8 +26,6 @@ public class FlightService : EntityService<Flight>, IFlightService
         lock (_lock)
         {
             return _context.Flights
-                .Include(airport => airport.From)
-                .Include(airport => airport.To)
                 .Any(storedFlight =>
                     storedFlight.From.City == flight.From.City &&
                     storedFlight.From.Country == flight.From.Country &&

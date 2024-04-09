@@ -25,17 +25,4 @@ public class AirportService : EntityService<Airport>, IAirportService
         
         return matchingAirports;
     }
-    
-    // public void DeleteUnusedAirports()
-    // {
-    //     var unusedAirports = _context.Airports
-    //         .Where(airport => !_context.Flights
-    //             .Any(flight => 
-    //                 flight.From.Id == airport.Id || 
-    //                 flight.To.Id == airport.Id))
-    //         .ToList();
-    //
-    //     _context.Airports.RemoveRange(unusedAirports);
-    //     _context.SaveChanges();
-    // }
 }
